@@ -1,0 +1,10 @@
+spring:
+  rabbitmq:
+    host: 192.3.128.13
+    port: 5672
+    virtual-host: /
+    username: itcast
+    password: 123321
+logging:
+  pattern:
+    dateformat: yyyy-MM-dd HH:mm:ss
