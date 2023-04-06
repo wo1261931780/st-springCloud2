@@ -101,8 +101,46 @@ public class SpringListener {
 	public void listenerTopicQueue2(String msg) throws InterruptedException {
 		log.info("listenerTopicQueue2: " + msg + "  " + LocalDateTime.now());
 	}
+	
 	@RabbitListener(queues = "object.queue")
 	public void listenObjectQueue(Map<String, Object> map) {
-	 		log.info("listenObjectQueue: " + map);
+		log.info("listenObjectQueue: " + map);
 	}
+	// 正向索引，做局部内容检索的时候效率比较差
+	// 先找到文档，然后再找到文档中的内容是否包含关键字，
+	// 倒排索引，做全局内容检索的时候效率比较高
+	// 基于词条创建索引，然后通过词条找到文档，然后再找到文档中的内容是否包含关键字
+	// 倒排索引更适合于基于内容的检索，
+	// 正向索引更适合于基于属性的检索
+	// 索引在MySQL中叫做库，但是在ElasticSearch中叫映射，mapping
+	/*
+	 docker run -d \
+	 	--name es \
+	     -e "ES_JAVA_OPTS=-Xms512m -Xmx512m" \ # 设置JVM内存
+	     -e "discovery.type=single-node" \ # 单节点
+	     -v es-data:/usr/share/elasticsearch/data \ # 挂载数据卷
+	     -v es-plugins:/usr/share/elasticsearch/plugins \ # 挂载插件卷
+	     --privileged \ # 允许容器内的程序使用特权模式
+	     --network es-net \ # 指定网络，es容器加入网络
+	     -p 9200:9200 \ # 暴露端口，9200是http端口，9300是tcp端口，tcp给节点互联
+	     -p 9300:9300 \ # 暴露端口
+	 elasticsearch:8.7.0
+	 */
+	
+	// 我们使用的是ik分词器，需要安装ik分词器作为插件到docker
+	// 然后，有分词类型，最小和最细
+	// 最小分词，就是将一个词语分成一个一个的词汇，
+	// 4个词到3个词到2个，以此类推
+	// 如果4个有，那就不再继续分词
+	// 程序员=程序员
+	// 最细分词，就是将一个词语分成一个一个的词汇，然后再将这些词汇分成一个一个的字
+	// 程序员=程序员，程序，员
+	// ==============================
+	// 其实分词器的底层，应该有字典，然后根据字典来进行文本分词
+	// es中没有数组这个概念，只有集合（允许多个值存在）
+	// ==============================
+	
+	
+	
+	
 }
