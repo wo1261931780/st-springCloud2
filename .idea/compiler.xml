@@ -8,6 +8,7 @@
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
         <module name="publisher" />
+        <module name="hotel" />
         <module name="consumer" />
       </profile>
     </annotationProcessing>
@@ -15,6 +16,7 @@
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="consumer" options="-parameters" />
+      <module name="hotel" options="-parameters" />
       <module name="publisher" options="-parameters" />
       <module name="st-springCloud2" options="" />
     </option>
