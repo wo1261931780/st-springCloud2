@@ -10,6 +10,5 @@ package wo1261931780.hotel.constants;
  * @description
  */
 public class HotelConstants {
-	
 	public static final String MAPPING_TEMPLATE = "hotel";
 }
