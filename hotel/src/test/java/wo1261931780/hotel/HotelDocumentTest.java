@@ -8,11 +8,19 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,6 +29,7 @@ import wo1261931780.hotel.pojo.Hotel;
 import wo1261931780.hotel.pojo.HotelDoc;
 import wo1261931780.hotel.service.IHotelService;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -40,6 +49,95 @@ public class HotelDocumentTest {
 	
 	@Autowired
 	private IHotelService hotelService;
+	
+	
+	@Test
+	void testMatchAll() throws IOException {
+		// 1.准备request
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		
+		// 2.使用dsl
+		searchRequest.source().query(QueryBuilders.matchAllQuery());// 这里本质上就是在写dsl
+		// 3.发送请求
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		
+		log.info(searchResponse + "");
+		// 这里得到的是一个大的json字符串
+		// 所以我们是需要进行逐层解析的
+		SearchHits hits = searchResponse.getHits();
+		long value = hits.getTotalHits().value;// 总数据量
+		log.info(value + "");
+		// 根据结构来逐层解析出东西
+		SearchHit[] searchHits = hits.getHits();
+		for (SearchHit hit : searchHits) {
+			String asString = hit.getSourceAsString();
+			HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
+			log.info(hotelDoc + "");
+		}
+	}
+	
+	@Test
+	void testMatchAll2() throws IOException {
+		// 1.准备request
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		
+		// 2.使用dsl
+		searchRequest.source().query(QueryBuilders.matchQuery("hotel", "华住会"));// 一个是字段名，一个是查询条件
+		// 3.发送请求
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		
+		log.info(searchResponse + "");
+		// 这里得到的是一个大的json字符串
+		// 所以我们是需要进行逐层解析的
+		SearchHits hits = searchResponse.getHits();
+		long value = hits.getTotalHits().value;// 总数据量
+		log.info(value + "");
+		// 根据结构来逐层解析出东西
+		SearchHit[] searchHits = hits.getHits();
+		for (SearchHit hit : searchHits) {
+			String asString = hit.getSourceAsString();
+			HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
+			log.info(hotelDoc + "");
+		}
+	}
+	
+	
+	@Test
+	void testBoolean() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+		boolQueryBuilder.must(QueryBuilders.termQuery("city", "厦门"));
+		boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").lte(200));
+		
+		searchRequest.source().query(boolQueryBuilder);
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		// ……
+		// 后面就和上面是一样的操作，直接提取出一个方法就可以
+		// ……
+	}
+	
+	@Test
+	void testPageAndSort() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source().query(QueryBuilders.matchAllQuery());
+		
+		searchRequest.source().sort("price", SortOrder.ASC);
+		// searchRequest.source().from((page-1)*size).size(5);// 前后端联动的结果
+		searchRequest.source().from(0).size(5);// 设置页码和分页
+		
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		// ……
+		// 后面就和上面是一样的操作，直接提取出一个方法就可以
+		// ……
+	}
+	
+	@Test
+	void testHighLight() {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source().query(QueryBuilders.matchQuery("all", "华住会"));
+		searchRequest.source().highlighter(new HighlightBuilder().field("name").requireFieldMatch(false));
+	}
 	
 	
 	@BeforeEach
