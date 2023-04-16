@@ -19,6 +19,10 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.BeforeEach;
@@ -137,6 +141,31 @@ public class HotelDocumentTest {
 		SearchRequest searchRequest = new SearchRequest("hotel");
 		searchRequest.source().query(QueryBuilders.matchQuery("all", "华住会"));
 		searchRequest.source().highlighter(new HighlightBuilder().field("name").requireFieldMatch(false));
+	}
+	
+	
+	@Test
+	void testAggregation() throws IOException {
+		// new SearchRequest("hotel").source().aggregation(AggregationBuilders.terms("city").field("city"));
+		// 其实上面是可以链式编程，
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source().size(0);// 不需要返回数据，只需要聚合结果
+		searchRequest.source().aggregation(AggregationBuilders
+				                                   .terms("city")// 聚合名称
+				                                   .field("city")// 聚合字段
+				                                   .size(10)
+		);
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		Aggregations aggregations = searchResponse.getAggregations();// 聚合结果
+		Terms city = aggregations.get("city");// 根据聚合名称获取聚合结果
+		List<? extends Terms.Bucket> cityBuckets = city.getBuckets();
+		for (Bucket cityBucket : cityBuckets) {
+			String keyAsString = cityBucket.getKeyAsString();
+			log.info(keyAsString + " : " + cityBucket.getDocCount());// 最终结果
+		}
+		// city.getBuckets().forEach(bucket -> {
+		// 	log.info(bucket.getKeyAsString() + " : " + bucket.getDocCount());
+		// });
 	}
 	
 	
