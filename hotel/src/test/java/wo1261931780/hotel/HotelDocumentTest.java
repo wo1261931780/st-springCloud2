@@ -25,6 +25,11 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms.Bucket;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.Suggest.Suggestion.Entry.Option;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,7 +38,6 @@ import wo1261931780.hotel.pojo.Hotel;
 import wo1261931780.hotel.pojo.HotelDoc;
 import wo1261931780.hotel.service.IHotelService;
 
-import javax.swing.*;
 import java.io.IOException;
 import java.util.List;
 
@@ -168,6 +172,25 @@ public class HotelDocumentTest {
 		// });
 	}
 	
+	@Test
+	void testSuggestion() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source()
+				.suggest(new SuggestBuilder()
+						         .addSuggestion("suggestions",
+								         SuggestBuilders.completionSuggestion("suggestion")
+										         .prefix("华住会")
+										         .skipDuplicates(true)
+										         .size(10)
+						         ));
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		Suggest searchResponseSuggest = searchResponse.getSuggest();// 获取建议结果
+		CompletionSuggestion suggestions = searchResponseSuggest.getSuggestion("suggestions");  // 根据建议名称获取建议结果
+		List<? extends Option> options = suggestions.getOptions();// 获取建议选项
+		for (Option option : options) {// 遍历建议选项
+			log.info(option.getText().toString());// 获取建议选项的文本，这里是我们想要获取的对象
+		}
+	}
 	
 	@BeforeEach
 	void setUp() {
