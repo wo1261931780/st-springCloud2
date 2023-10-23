@@ -30,6 +30,7 @@ import org.elasticsearch.search.suggest.Suggest.Suggestion.Entry.Option;
 import org.elasticsearch.search.suggest.SuggestBuilder;
 import org.elasticsearch.search.suggest.SuggestBuilders;
 import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -54,7 +55,30 @@ import java.util.List;
 @Slf4j
 public class HotelDocumentTest {
 	private RestHighLevelClient restHighLevelClient;
-	
+
+	// 要想在java中操作dsl
+	// 首先要创建对应的索引库，然后在这里完成初始化的过程
+
+
+
+	@BeforeEach
+	void setUp() {
+		// 因为是成员变量，所以在这里初始化
+		restHighLevelClient = new RestHighLevelClient(
+				RestClient.builder(
+						new HttpHost("localhost", 9200, "http")
+						// 如果是集群，就是多个HttpHost
+						// ,new HttpHost("localhost", 9201, "http")
+				));
+	}
+
+	@AfterEach
+	void tearDown() throws IOException {
+		restHighLevelClient.close();
+		// 完成后主动销毁
+	}
+	// 所有的单元测试，都会优先执行初始化，所以这里可以直接使用
+
 	@Autowired
 	private IHotelService hotelService;
 	
@@ -192,16 +216,7 @@ public class HotelDocumentTest {
 		}
 	}
 	
-	@BeforeEach
-	void setUp() {
-		// 因为是成员变量，所以在这里初始化
-		restHighLevelClient = new RestHighLevelClient(
-				RestClient.builder(
-						new HttpHost("localhost", 9200, "http")
-						// 如果是集群，就是多个HttpHost
-						// ,new HttpHost("localhost", 9201, "http")
-				));
-	}
+
 	
 	@Test
 	void testAddDocument() throws IOException {

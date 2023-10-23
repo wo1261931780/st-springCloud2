@@ -56,6 +56,8 @@ public class HotelIndexTest {
 		request.source(MAPPING_TEMPLATE, XContentType.JSON);
 		// 客户端执行请求 IndicesClient,请求后获得响应
 		restHighLevelClient.indices().create(request, RequestOptions.DEFAULT);
+		// 所有增删改查的操作请求，实际都是在restHighLevelClient.indices()中间的
+		// 所以这里我们操作一次即可
 		// 响应的状态
 	}
 	
