@@ -7,6 +7,9 @@ import wo1261931780.stspringCloud2.mapper.HotelMapper;
 import wo1261931780.stspringCloud2.pojo.Hotel;
 import wo1261931780.stspringCloud2.service.IHotelService;
 
+/**
+ * @author junw
+ */
 @Service
 public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHotelService {
 }
