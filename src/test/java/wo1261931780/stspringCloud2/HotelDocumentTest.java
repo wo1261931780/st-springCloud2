@@ -134,7 +134,6 @@ public class HotelDocumentTest {
 	void testDeleteDocument() throws IOException {
 		// 1. 创建文档对象
 		DeleteRequest hotel = new DeleteRequest("hotel", "61083");
-
 		// 2. 调用方法，添加文档
 		restHighLevelClient.delete(hotel, RequestOptions.DEFAULT);
 		// 3. 关闭客户端
