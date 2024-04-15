@@ -9,11 +9,16 @@ import org.elasticsearch.action.delete.DeleteRequest;
 import org.elasticsearch.action.get.GetRequest;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexRequest;
+import org.elasticsearch.action.search.SearchRequest;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateRequest;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -168,57 +173,59 @@ public class HotelDocumentTest {
 		// 所以，这里就不需要再写多个IndexRequest了
 		restHighLevelClient.bulk(null, RequestOptions.DEFAULT);
 	}
-	// @Test
-	// void testMatchAll() throws IOException {
-	// 	// 1.准备request
-	// 	SearchRequest searchRequest = new SearchRequest("hotel");
-	//
-	// 	// 2.使用dsl
-	// 	searchRequest.source().query(QueryBuilders.matchAllQuery());// 这里本质上就是在写dsl
-	// 	// 3.发送请求
-	// 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-	//
-	// 	log.info(searchResponse + "");
-	// 	// 这里得到的是一个大的json字符串
-	// 	// 所以我们是需要进行逐层解析的
-	// 	SearchHits hits = searchResponse.getHits();
-	// 	long value = hits.getTotalHits().value;// 总数据量
-	// 	log.info(value + "");
-	// 	// 根据结构来逐层解析出东西
-	// 	SearchHit[] searchHits = hits.getHits();
-	// 	for (SearchHit hit : searchHits) {
-	// 		String asString = hit.getSourceAsString();
-	// 		HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
-	// 		log.info(hotelDoc + "");
-	// 	}
-	// }
-	//
-	// @Test
-	// void testMatchAll2() throws IOException {
-	// 	// 1.准备request
-	// 	SearchRequest searchRequest = new SearchRequest("hotel");
-	//
-	// 	// 2.使用dsl
-	// 	searchRequest.source().query(QueryBuilders.matchQuery("hotel", "华住会"));// 一个是字段名，一个是查询条件
-	// 	// 3.发送请求
-	// 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-	//
-	// 	log.info(searchResponse + "");
-	// 	// 这里得到的是一个大的json字符串
-	// 	// 所以我们是需要进行逐层解析的
-	// 	SearchHits hits = searchResponse.getHits();
-	// 	long value = hits.getTotalHits().value;// 总数据量
-	// 	log.info(value + "");
-	// 	// 根据结构来逐层解析出东西
-	// 	SearchHit[] searchHits = hits.getHits();
-	// 	for (SearchHit hit : searchHits) {
-	// 		String asString = hit.getSourceAsString();
-	// 		HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
-	// 		log.info(hotelDoc + "");
-	// 	}
-	// }
-	//
-	//
+
+	@Test
+	void testMatchAll() throws IOException {
+		// 1.准备request
+		SearchRequest searchRequest = new SearchRequest("hotel");
+
+		// 2.使用dsl
+		searchRequest.source().query(QueryBuilders.matchAllQuery());// 这里本质上就是在写dsl
+		// 3.发送请求
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		// 这里会将我们es返回的结果，直接封装为一个对象
+		// 而这个对象，就是searchResponse
+		log.info("{}", searchResponse);
+		// 这里得到的是一个大的json字符串
+		// 所以我们是需要进行逐层解析的
+		SearchHits hits = searchResponse.getHits();
+		long value = hits.getTotalHits().value;// 总数据量
+		log.info("{}", value);
+		// 根据结构来逐层解析出东西
+		SearchHit[] searchHits = hits.getHits();
+		for (SearchHit hit : searchHits) {
+			String asString = hit.getSourceAsString();
+			HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
+			log.info("{}", hotelDoc);
+		}
+	}
+
+	@Test
+	void testMatchAll2() throws IOException {
+		// 1.准备request
+		SearchRequest searchRequest = new SearchRequest("hotel");
+
+		// 2.使用dsl
+		searchRequest.source().query(QueryBuilders.matchQuery("hotel", "华住会"));// 一个是字段名，一个是查询条件
+		// 3.发送请求
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+		log.info(searchResponse + "");
+		// 这里得到的是一个大的json字符串
+		// 所以我们是需要进行逐层解析的
+		SearchHits hits = searchResponse.getHits();
+		long value = hits.getTotalHits().value;// 总数据量
+		log.info(value + "");
+		// 根据结构来逐层解析出东西
+		SearchHit[] searchHits = hits.getHits();
+		for (SearchHit hit : searchHits) {
+			String asString = hit.getSourceAsString();
+			HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
+			log.info(hotelDoc + "");
+		}
+	}
+
+
 	// @Test
 	// void testBoolean() throws IOException {
 	// 	SearchRequest searchRequest = new SearchRequest("hotel");
