@@ -16,20 +16,27 @@ import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestClient;
 import org.elasticsearch.client.RestHighLevelClient;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
+import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.util.CollectionUtils;
 import wo1261931780.stspringCloud2.pojo.Hotel;
 import wo1261931780.stspringCloud2.pojo.HotelDoc;
 import wo1261931780.stspringCloud2.service.IHotelService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Created by Intellij IDEA.
@@ -174,6 +181,11 @@ public class HotelDocumentTest {
 		restHighLevelClient.bulk(null, RequestOptions.DEFAULT);
 	}
 
+	/**
+	 * 搜索文档
+	 *
+	 * @throws IOException 异常
+	 */
 	@Test
 	void testMatchAll() throws IOException {
 		// 1.准备request
@@ -189,6 +201,38 @@ public class HotelDocumentTest {
 		// 这里得到的是一个大的json字符串
 		// 所以我们是需要进行逐层解析的
 		SearchHits hits = searchResponse.getHits();
+		long value = hits.getTotalHits().value;// 总数据一共多少条
+		// 所有的数据结果都在hits中间
+		log.info("{}", value);
+		// 根据结构来逐层解析出东西
+		SearchHit[] searchHits = hits.getHits(); // 得到所有的结果
+		for (SearchHit hit : searchHits) {
+			String asString = hit.getSourceAsString();  // 得到每条数据的json字符串
+			HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);// 反序列化
+			log.info("{}", hotelDoc);
+		}
+	}
+
+	/**
+	 * 搜索文档，匹配字段
+	 *
+	 * @throws IOException 异常
+	 */
+	@Test
+	void testMatchAll2() throws IOException {
+		// 1.准备request
+		SearchRequest searchRequest = new SearchRequest("hotel");
+
+		// 2.使用dsl
+		// searchRequest.source().query(QueryBuilders.matchQuery("hotel", "华住会"));// 一个是字段名，一个是查询条件
+		searchRequest.source().query(QueryBuilders.matchQuery("all", "华住会"));// 一个是字段名，一个是查询条件
+		// 3.发送请求
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+
+		log.info("{}", searchResponse);
+		// 这里得到的是一个大的json字符串
+		// 所以我们是需要进行逐层解析的
+		SearchHits hits = searchResponse.getHits();
 		long value = hits.getTotalHits().value;// 总数据量
 		log.info("{}", value);
 		// 根据结构来逐层解析出东西
@@ -200,70 +244,129 @@ public class HotelDocumentTest {
 		}
 	}
 
+	/**
+	 * 将展示结果的方法抽取出来
+	 *
+	 * @throws IOException 异常
+	 */
 	@Test
-	void testMatchAll2() throws IOException {
+	void testMatchAll3() throws IOException {
 		// 1.准备request
 		SearchRequest searchRequest = new SearchRequest("hotel");
 
 		// 2.使用dsl
-		searchRequest.source().query(QueryBuilders.matchQuery("hotel", "华住会"));// 一个是字段名，一个是查询条件
+		// searchRequest.source().query(QueryBuilders.matchQuery("hotel", "华住会"));// 一个是字段名，一个是查询条件
+		searchRequest.source().query(QueryBuilders.matchQuery("all", "华住会"));// 一个是字段名，一个是查询条件
 		// 3.发送请求
 		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 
-		log.info(searchResponse + "");
+		log.info("{}", searchResponse);
 		// 这里得到的是一个大的json字符串
 		// 所以我们是需要进行逐层解析的
 		SearchHits hits = searchResponse.getHits();
 		long value = hits.getTotalHits().value;// 总数据量
-		log.info(value + "");
+		log.info("{}", value);
 		// 根据结构来逐层解析出东西
+		handleResponse(hits);
+	}
+
+	/**
+	 * 处理搜索结果的方法
+	 * 将方法抽取以后，代码更加简洁
+	 *
+	 * @param hits 搜索结果
+	 */
+	private static void handleResponse(SearchHits hits) {
 		SearchHit[] searchHits = hits.getHits();
 		for (SearchHit hit : searchHits) {
 			String asString = hit.getSourceAsString();
 			HotelDoc hotelDoc = JSON.parseObject(asString, HotelDoc.class);
-			log.info(hotelDoc + "");
+			log.info("{}", hotelDoc);
 		}
 	}
 
+	/**
+	 * 组合查询
+	 *
+	 * @throws IOException 异常
+	 */
+	@Test
+	void testBoolean() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel"); // 索引库名
+		// 这里是组合查询，先匹配city，再过滤price
+		// 这里的boolQuery是布尔查询，可以组合多个查询条件
+		// must表示必须匹配，filter表示过滤，可以有多个filter
+		// 这里的termQuery是精确匹配，这里的city是字段名，厦门是查询条件
 
-	// @Test
-	// void testBoolean() throws IOException {
-	// 	SearchRequest searchRequest = new SearchRequest("hotel");
-	//
-	// 	BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
-	// 	boolQueryBuilder.must(QueryBuilders.termQuery("city", "厦门"));
-	// 	boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").lte(200));
-	//
-	// 	searchRequest.source().query(boolQueryBuilder);
-	// 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-	// 	// ……
-	// 	// 后面就和上面是一样的操作，直接提取出一个方法就可以
-	// 	// ……
-	// }
-	//
-	// @Test
-	// void testPageAndSort() throws IOException {
-	// 	SearchRequest searchRequest = new SearchRequest("hotel");
-	// 	searchRequest.source().query(QueryBuilders.matchAllQuery());
-	//
-	// 	searchRequest.source().sort("price", SortOrder.ASC);
-	// 	// searchRequest.source().from((page-1)*size).size(5);// 前后端联动的结果
-	// 	searchRequest.source().from(0).size(5);// 设置页码和分页
-	//
-	// 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-	// 	// ……
-	// 	// 后面就和上面是一样的操作，直接提取出一个方法就可以
-	// 	// ……
-	// }
-	//
-	// @Test
-	// void testHighLight() {
-	// 	SearchRequest searchRequest = new SearchRequest("hotel");
-	// 	searchRequest.source().query(QueryBuilders.matchQuery("all", "华住会"));
-	// 	searchRequest.source().highlighter(new HighlightBuilder().field("name").requireFieldMatch(false));
-	// }
-	//
-	//
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery(); // 创建布尔查询对象
+		boolQueryBuilder.must(QueryBuilders.termQuery("city", "厦门")); // 必须匹配
+		boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").lte(200)); // 过滤，只要价格小于等于200
+		// 这是我们手动写查询的方式，实际很麻烦，每次查询都要一个独立的dsl语句
+		// 是否存在自动配置/生成/判断的方式来完成？
+		searchRequest.source().query(boolQueryBuilder); // 设置查询条件
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		// ……
+		// 后面就和上面是一样的操作，直接提取出一个方法就可以
+		// ……
+	}
+
+	/**
+	 * 分页和排序
+	 *
+	 * @throws IOException 异常
+	 */
+	@Test
+	void testPageAndSort() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel"); // 索引库名
+		searchRequest.source().query(QueryBuilders.matchAllQuery()); // 匹配所有
+
+		searchRequest.source().sort("price", SortOrder.ASC); // 排序，按照价格升序
+		// searchRequest.source().from((page-1)*size).size(5);// 前后端联动的结果
+		searchRequest.source().from(0).size(5);// 设置页码和分页
+
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		// ……
+		// 后面就和上面是一样的操作，直接提取出一个方法就可以
+		// ……
+	}
+
+	/**
+	 * 高亮显示
+	 */
+	@Test
+	void testHighLight() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source().query(QueryBuilders.matchQuery("all", "华住会"));
+		searchRequest.source().highlighter(new HighlightBuilder().field("name").requireFieldMatch(false));
+		// es的特点之一，全部支持链式编程
+		// 其实有个问题，我们的高亮字段不是在原始位置自动替换出来的
+		// ，要手动从hits中获取
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		SearchHits hits = searchResponse.getHits();
+		SearchHit[] searchHits = hits.getHits(); // 这里我们得到了所有数据的数组，但是需要对数据完成一次加工操作
+		if (CollectionUtils.isEmpty(searchHits)) {
+			log.info("没有数据");
+			return;
+		}
+		for (SearchHit hit : searchHits) {
+			String sourceAsString = hit.getSourceAsString();// 得到原始数据
+			HotelDoc hotelDoc = JSON.parseObject(sourceAsString, HotelDoc.class);// 使用指定的对象对结果进行序列化操作，变成我们使用的对象
+			log.info("我是单个对象：{}", hotelDoc);// 打印原始数据
+			// 这里会发现我们的结果没有进行高亮标签展示，所以有了下面这一步：
+			Map<String, HighlightField> highlightFields = hit.getHighlightFields();
+			if (CollectionUtils.isEmpty(highlightFields)) {
+				log.info("没有高亮展示");
+				continue;
+			}
+			HighlightField name = highlightFields.get("name");
+			hotelDoc.setName(String.valueOf(name));
+			log.info("我是高亮展示的对象：{}", hotelDoc);// 打印高亮以后的数据
+		}
+
+
+	}
+
+
 	// // @Test
 	// // void testAggregation() throws IOException {
 	// // 	// new SearchRequest("hotel").source().aggregation(AggregationBuilders.terms("city").field("city"));
