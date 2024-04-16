@@ -344,10 +344,10 @@ public class HotelDocumentTest {
 		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 		SearchHits hits = searchResponse.getHits();
 		SearchHit[] searchHits = hits.getHits(); // 这里我们得到了所有数据的数组，但是需要对数据完成一次加工操作
-		if (CollectionUtils.isEmpty(searchHits)) {
-			log.info("没有数据");
-			return;
-		}
+		// if (CollectionUtils.isEmpty(searchHits)) {
+		// 	log.info("没有数据");
+		// 	return;
+		// }
 		for (SearchHit hit : searchHits) {
 			String sourceAsString = hit.getSourceAsString();// 得到原始数据
 			HotelDoc hotelDoc = JSON.parseObject(sourceAsString, HotelDoc.class);// 使用指定的对象对结果进行序列化操作，变成我们使用的对象
@@ -367,50 +367,50 @@ public class HotelDocumentTest {
 	}
 
 
-	// // @Test
-	// // void testAggregation() throws IOException {
-	// // 	// new SearchRequest("hotel").source().aggregation(AggregationBuilders.terms("city").field("city"));
-	// // 	// 其实上面是可以链式编程，
-	// // 	SearchRequest searchRequest = new SearchRequest("hotel");
-	// // 	searchRequest.source().size(0);// 不需要返回数据，只需要聚合结果
-	// // 	searchRequest.source().aggregation(AggregationBuilders
-	// // 			.terms("city")// 聚合名称
-	// // 			.field("city")// 聚合字段
-	// // 			.size(10)
-	// // 	);
-	// // 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-	// // 	Aggregations aggregations = searchResponse.getAggregations();// 聚合结果
-	// // 	Terms city = aggregations.get("city");// 根据聚合名称获取聚合结果
-	// // 	List<? extends Terms.Bucket> cityBuckets = city.getBuckets();
-	// // 	for (Bucket cityBucket : cityBuckets) {
-	// // 		String keyAsString = cityBucket.getKeyAsString();
-	// // 		log.info(keyAsString + " : " + cityBucket.getDocCount());// 最终结果
-	// // 	}
-	// // 	// city.getBuckets().forEach(bucket -> {
-	// // 	// 	log.info(bucket.getKeyAsString() + " : " + bucket.getDocCount());
-	// // 	// });
-	// // }
-	//
-	// // @Test
-	// // void testSuggestion() throws IOException {
-	// // 	SearchRequest searchRequest = new SearchRequest("hotel");
-	// // 	searchRequest.source()
-	// // 			.suggest(new SuggestBuilder()
-	// // 					.addSuggestion("suggestions",
-	// // 							SuggestBuilders.completionSuggestion("suggestion")
-	// // 									.prefix("华住会")
-	// // 									.skipDuplicates(true)
-	// // 									.size(10)
-	// // 					));
-	// // 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
-	// // 	Suggest searchResponseSuggest = searchResponse.getSuggest();// 获取建议结果
-	// // 	CompletionSuggestion suggestions = searchResponseSuggest.getSuggestion("suggestions");  // 根据建议名称获取建议结果
-	// // 	List<? extends Option> options = suggestions.getOptions();// 获取建议选项
-	// // 	for (Option option : options) {// 遍历建议选项
-	// // 		log.info(option.getText().toString());// 获取建议选项的文本，这里是我们想要获取的对象
-	// // 	}
-	// // }
-	//
-	//
+	// @Test
+	// void testAggregation() throws IOException {
+	// 	// new SearchRequest("hotel").source().aggregation(AggregationBuilders.terms("city").field("city"));
+	// 	// 其实上面是可以链式编程，
+	// 	SearchRequest searchRequest = new SearchRequest("hotel");
+	// 	searchRequest.source().size(0);// 不需要返回数据，只需要聚合结果
+	// 	searchRequest.source().aggregation(AggregationBuilders
+	// 			.terms("city")// 聚合名称
+	// 			.field("city")// 聚合字段
+	// 			.size(10)
+	// 	);
+	// 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+	// 	Aggregations aggregations = searchResponse.getAggregations();// 聚合结果
+	// 	Terms city = aggregations.get("city");// 根据聚合名称获取聚合结果
+	// 	List<? extends Terms.Bucket> cityBuckets = city.getBuckets();
+	// 	for (Bucket cityBucket : cityBuckets) {
+	// 		String keyAsString = cityBucket.getKeyAsString();
+	// 		log.info(keyAsString + " : " + cityBucket.getDocCount());// 最终结果
+	// 	}
+	// 	// city.getBuckets().forEach(bucket -> {
+	// 	// 	log.info(bucket.getKeyAsString() + " : " + bucket.getDocCount());
+	// 	// });
+	// }
+
+	// @Test
+	// void testSuggestion() throws IOException {
+	// 	SearchRequest searchRequest = new SearchRequest("hotel");
+	// 	searchRequest.source()
+	// 			.suggest(new SuggestBuilder()
+	// 					.addSuggestion("suggestions",
+	// 							SuggestBuilders.completionSuggestion("suggestion")
+	// 									.prefix("华住会")
+	// 									.skipDuplicates(true)
+	// 									.size(10)
+	// 					));
+	// 	SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+	// 	Suggest searchResponseSuggest = searchResponse.getSuggest();// 获取建议结果
+	// 	CompletionSuggestion suggestions = searchResponseSuggest.getSuggestion("suggestions");  // 根据建议名称获取建议结果
+	// 	List<? extends Option> options = suggestions.getOptions();// 获取建议选项
+	// 	for (Option option : options) {// 遍历建议选项
+	// 		log.info(option.getText().toString());// 获取建议选项的文本，这里是我们想要获取的对象
+	// 	}
+	// }
+
+
 
 }
