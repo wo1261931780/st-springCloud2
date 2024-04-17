@@ -6,8 +6,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import wo1261931780.stspringCloud2.pojo.PageResult;
+import wo1261931780.stspringCloud2.pojo.RequestParams;
 import wo1261931780.stspringCloud2.service.impl.HotelService;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
@@ -34,5 +37,11 @@ public class HotelController {
 		// return hotelService.filterHotel(map);
 		
 		return null;
+	}
+
+	@PostMapping("/list")
+	public PageResult searchHotel(@RequestBody RequestParams requestParams) throws IOException {
+		log.info("searchHotel");
+		return hotelService.searchHotel(requestParams);
 	}
 }
