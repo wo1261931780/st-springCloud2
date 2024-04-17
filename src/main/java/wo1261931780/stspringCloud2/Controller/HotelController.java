@@ -26,22 +26,28 @@ import java.util.Map;
 @Controller
 @Slf4j
 public class HotelController {
-	
-	
+
+
 	@Autowired
 	private HotelService hotelService;
-	
+
 	@PostMapping("/hotel")
 	public Map<String, List<String>> hotel(@RequestBody Map<String, Object> map) {
 		// log.info("hotel");
 		// return hotelService.filterHotel(map);
-		
+
 		return null;
 	}
 
-	@PostMapping("/list")
+	@PostMapping("/hotel/list")
 	public PageResult searchHotel(@RequestBody RequestParams requestParams) throws IOException {
 		log.info("searchHotel");
 		return hotelService.searchHotel(requestParams);
+	}
+
+	@PostMapping("/hotel/booleanList")
+	public PageResult searchBooleanHotel(@RequestBody RequestParams requestParams) throws IOException {
+		log.info("searchHotel");
+		return hotelService.searchBooleanHotel(requestParams);
 	}
 }

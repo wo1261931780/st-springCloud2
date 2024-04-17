@@ -7,9 +7,11 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import wo1261931780.stspringCloud2.mapper.HotelMapper;
@@ -67,6 +69,36 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 		log.debug("总数据量:" + value);
 		// 根据结构来逐层解析出东西
 		return handleResponse(hits);
+		// 2024年4月17日18:15:10，这里碰到个es没在容器中启动的问题，回家等修好了再试试项目
+	}
+
+	@Override
+	public PageResult searchBooleanHotel(RequestParams requestParams) {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery();
+		String requestParamsKey = requestParams.getKey();
+		if (requestParamsKey.isEmpty()) {
+			boolQueryBuilder.must(QueryBuilders.matchAllQuery());
+		} else {
+			boolQueryBuilder.must(QueryBuilders.matchQuery("all", requestParamsKey));
+		}
+		// 然后分别根据城市，品牌，星级来判断一遍
+		if (!requestParams.getCity().isEmpty()) {
+			boolQueryBuilder.filter(QueryBuilders.termQuery("city", requestParams.getCity()));
+		}
+		if (!requestParams.getBrand().isEmpty()) {
+			boolQueryBuilder.filter(QueryBuilders.termQuery("brand", requestParams.getBrand()));
+		}
+
+		if (requestParams.getStarName().isEmpty()) {
+			boolQueryBuilder.filter(QueryBuilders.termQuery("star", requestParams.getStarName()));
+		}
+
+		if (requestParams.getMinPrice() > 0) {
+			boolQueryBuilder.filter(QueryBuilders.rangeQuery("price").lte(requestParams.getMinPrice()).gte(requestParams.getMaxPrice()));
+		}
+
+		return null;
 	}
 
 	/**
