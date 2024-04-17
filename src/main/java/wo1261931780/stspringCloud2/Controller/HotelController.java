@@ -50,4 +50,9 @@ public class HotelController {
 		log.info("searchHotel");
 		return hotelService.searchBooleanHotel(requestParams);
 	}
+	@PostMapping("/hotel/sortedList")
+	public PageResult searchSortedHotel(@RequestBody RequestParams requestParams) throws IOException {
+		log.info("searchSortedHotel");
+		return hotelService.searchSortedHotel(requestParams);
+	}
 }

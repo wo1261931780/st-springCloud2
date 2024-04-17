@@ -15,4 +15,7 @@ public interface IHotelService extends IService<Hotel> {
 	PageResult searchHotel(RequestParams requestParams) throws IOException;
 
 	PageResult searchBooleanHotel(RequestParams requestParams);
+
+	PageResult searchSortedHotel(RequestParams requestParams
+	);
 }

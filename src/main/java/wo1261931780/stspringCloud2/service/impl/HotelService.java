@@ -7,11 +7,16 @@ import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
 import org.elasticsearch.client.RestHighLevelClient;
+import org.elasticsearch.common.geo.GeoPoint;
+import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
+import org.elasticsearch.search.sort.SortBuilder;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import wo1261931780.stspringCloud2.mapper.HotelMapper;
@@ -56,7 +61,7 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 			searchRequest.source().query(QueryBuilders.matchQuery("all", requestParamsKey));
 		}
 		Integer size = requestParams.getSize();
-		searchRequest.source().from((requestParams.getPage() - 1) * size).size(size);
+		searchRequest.source().from((requestParams.getPage() - 1) * size).size(size);// 分页
 
 		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 
@@ -100,6 +105,36 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 
 		return null;
 	}
+
+	@Override
+	public PageResult searchSortedHotel(RequestParams requestParams) {
+		// 1.准备request
+		SearchRequest searchRequest = new SearchRequest("hotel");
+
+		// 2.使用dsl
+		// 需要结合前端
+		String requestParamsKey = requestParams.getKey();
+		// 健壮性分析
+		if (requestParamsKey.isEmpty()) {
+			searchRequest.source().query(QueryBuilders.matchAllQuery());
+		} else {
+			searchRequest.source().query(QueryBuilders.matchQuery("all", requestParamsKey));
+		}
+		Integer size = requestParams.getSize();
+		searchRequest.source().from((requestParams.getPage() - 1) * size).size(size);// 分页
+		// 现在开始使用sorted的方式来完成查询，其他部分都是类似的
+		String location = requestParams.getLocation();
+		if (location != null && !location.isEmpty()) {
+			// searchRequest.source().sort("location", requestParams.getLocation());
+			searchRequest.source().sort(SortBuilders
+					.geoDistanceSort("localtion", new GeoPoint(location)) // 按照距离排序
+					.order(SortOrder.ASC)// 升序排序
+					.unit(DistanceUnit.KILOMETERS));// 单位是公里
+		}
+		// 我们要想看到距离的数据，还需要到结果中类似hits的形式去拿到sort的结果，然后再进行解析
+		return null;
+	}
+
 
 	/**
 	 * 处理搜索结果的方法
