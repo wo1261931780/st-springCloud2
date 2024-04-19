@@ -7,6 +7,8 @@ import wo1261931780.stspringCloud2.pojo.PageResult;
 import wo1261931780.stspringCloud2.pojo.RequestParams;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author junw
@@ -16,6 +18,7 @@ public interface IHotelService extends IService<Hotel> {
 
 	PageResult searchBooleanHotel(RequestParams requestParams);
 
-	PageResult searchSortedHotel(RequestParams requestParams
-	);
+	PageResult searchSortedHotel(RequestParams requestParams);
+
+	Map<String, List<String>> filters() throws IOException;
 }

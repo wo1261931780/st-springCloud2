@@ -26,7 +26,12 @@ public class StSpringCloud2Application {
 	@Bean
 	public RestHighLevelClient restHighLevelClient() {
 		return new RestHighLevelClient(RestClient.builder(
-				HttpHost.create("http://192.168.0.1:9200")
+				// HttpHost.create("http://0.0.0.0:9200")
+				// HttpHost.create("http://172.18.0.2:9200")
+				HttpHost.create("http://127.0.0.1:9200")
+				// 这里使用了gpt帮我进行日志分析，上面第一个不是ip地址，所以错误
+				// 第二个，因为是docker中的发布地址和通信地址，也不对
+				// 一开始使用localhost，后来改成了127.0.0.1，因为我本地是可以访问的，所以就用了这个地址
 		));
 	}
 }

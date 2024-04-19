@@ -13,6 +13,9 @@ import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
@@ -27,7 +30,10 @@ import wo1261931780.stspringCloud2.pojo.RequestParams;
 import wo1261931780.stspringCloud2.service.IHotelService;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author junw
@@ -133,6 +139,55 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 		}
 		// 我们要想看到距离的数据，还需要到结果中类似hits的形式去拿到sort的结果，然后再进行解析
 		return null;
+	}
+
+	/**
+	 * 这里面就是发请求，根据请求解析结果
+	 *
+	 * @return Map<String, List < String>>
+	 */
+	@Override
+	public Map<String, List<String>> filters() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel"); // 索引名称
+		searchRequest.source().size(0);
+		searchRequest.source().aggregation(AggregationBuilders.terms("brandAgg")
+				.field("brand.keyword")
+				.size(10));
+		searchRequest.source().aggregation(AggregationBuilders.terms("cityAgg")
+				.field("city.keyword")
+				.size(10));
+		searchRequest.source().aggregation(AggregationBuilders.terms("starAgg")
+				.field("starName.keyword")
+				.size(10));
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		// 有结果以后，需要对结果进行解析，才能进入我们的Java项目中
+		Map<String, List<String>> resultMap = new HashMap<>();
+		Aggregations aggregations = searchResponse.getAggregations(); // 获取聚合结果
+		List<String> brandList = getStringList(aggregations, "brandName");
+		resultMap.put("brand", brandList); // 品牌聚合结果存入map
+		List<String> cityList = getStringList(aggregations, "cityName");
+		resultMap.put("city", cityList);
+		List<String> starList = getStringList(aggregations, "starName");
+		resultMap.put("star", starList);
+		return resultMap;
+	}
+
+	/**
+	 * 获取聚合结果的方法
+	 *
+	 * @param aggregations 聚合结果
+	 * @param todoName     聚合结果的名称
+	 * @return List<String>
+	 */
+	private static List<String> getStringList(Aggregations aggregations, String todoName) {
+		Terms brandTerms = aggregations.get("brandAgg"); // 获取品牌聚合结果
+		List<? extends Terms.Bucket> buckets = brandTerms.getBuckets(); // 获取品牌聚合结果的桶
+		List<String> brandList = new ArrayList<>();
+		buckets.forEach(bucket -> { // 遍历桶，打印品牌和数量
+			String key = bucket.getKeyAsString();
+			brandList.add(key);
+		});
+		return brandList;
 	}
 
 
