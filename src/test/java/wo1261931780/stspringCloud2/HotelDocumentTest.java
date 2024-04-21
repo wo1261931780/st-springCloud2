@@ -178,7 +178,7 @@ public class HotelDocumentTest {
 		// bulkRequest.add(new IndexRequest("hotel").id("3").source(XContentType.JSON, "name", "北京饭店"));
 		// 因为有了一个转化为文档对象的循环过程
 		// 所以，这里就不需要再写多个IndexRequest了
-		restHighLevelClient.bulk(null, RequestOptions.DEFAULT);
+		restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
 	}
 
 	/**

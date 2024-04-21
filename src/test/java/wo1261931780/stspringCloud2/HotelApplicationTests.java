@@ -61,8 +61,8 @@ class HotelApplicationTests {
 	@Test
 	void testFilter() throws IOException {
 		log.info("你好，我测试es中的过滤查询");
-		Map<String, List<String>> filters = hotelService.filters();
-		log.info("过滤条件：{}", filters);
+		// Map<String, List<String>> filters = hotelService.filters();
+		// log.info("过滤条件：{}", filters);
 		// 过滤条件：{star=[皇冠假日], city=[皇冠假日], brand=[皇冠假日]}
 		// 里面没有数据，所以不行
 	}

@@ -20,5 +20,5 @@ public interface IHotelService extends IService<Hotel> {
 
 	PageResult searchSortedHotel(RequestParams requestParams);
 
-	Map<String, List<String>> filters() throws IOException;
+	Map<String, List<String>> filters(RequestParams requestParams) throws IOException;
 }

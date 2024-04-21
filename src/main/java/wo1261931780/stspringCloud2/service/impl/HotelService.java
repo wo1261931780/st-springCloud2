@@ -147,8 +147,10 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 	 * @return Map<String, List < String>>
 	 */
 	@Override
-	public Map<String, List<String>> filters() throws IOException {
+	public Map<String, List<String>> filters(RequestParams requestParams) throws IOException {
 		SearchRequest searchRequest = new SearchRequest("hotel"); // 索引名称
+		// 这里因为要进行一个过滤，所以这部分代码是新增进来的
+		// buidBasicQuery方法是新增的，用来构造查询条件，todo 导入课程代码
 		searchRequest.source().size(0);
 		searchRequest.source().aggregation(AggregationBuilders.terms("brandAgg")
 				.field("brand.keyword")
