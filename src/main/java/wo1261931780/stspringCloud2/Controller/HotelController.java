@@ -31,7 +31,7 @@ public class HotelController {
 	@Autowired
 	private HotelService hotelService;
 
-	@PostMapping("/hotel")
+	@PostMapping("/")
 	public Map<String, List<String>> hotel(@RequestBody Map<String, Object> map) {
 		// log.info("hotel");
 		// return hotelService.filterHotel(map);
@@ -62,9 +62,10 @@ public class HotelController {
 		return hotelService.filters(requestParams);// 之前我们写的不带参数，这里需要带上
 	}
 
-	@GetMapping("suggestion")
+	@GetMapping("/suggestion")
 	public List<String> getSuggestion(@RequestParam("key") String prefix) throws IOException {
 		log.info("getHotel");
-		return hotelService.getSuggestion(prefix);
+		List<String> suggestion = hotelService.getSuggestion(prefix);
+		return suggestion;
 	}
 }

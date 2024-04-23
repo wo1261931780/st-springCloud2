@@ -196,9 +196,11 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 		List<String> stringList = new ArrayList<>(options.size());
 		// 这里的空间大小是很有讲究的
 		for (CompletionSuggestion.Entry.Option option : options) {
-			log.debug(option.toString());
+			log.warn(option.toString());
+			log.warn(option.getText().toString());
 			stringList.add(option.getText().toString());
 		}
+		log.error(stringList.toString());
 		return stringList;
 	}
 
