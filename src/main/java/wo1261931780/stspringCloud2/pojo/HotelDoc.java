@@ -18,6 +18,7 @@ public class HotelDoc {
     private String business;
     private String location;// 大部分的字段都是一样的，经纬度不一样
     private String pic;
+    // 这里后面有很多修改，包括对构造方法的修改，以及对location字段的格式的修改。
 
     public HotelDoc(Hotel hotel) {
         this.id = hotel.getId();

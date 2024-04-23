@@ -362,8 +362,6 @@ public class HotelDocumentTest {
 			hotelDoc.setName(String.valueOf(name));
 			log.info("我是高亮展示的对象：{}", hotelDoc);// 打印高亮以后的数据
 		}
-
-
 	}
 
 
