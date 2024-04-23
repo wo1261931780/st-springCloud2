@@ -11,6 +11,8 @@ import org.elasticsearch.common.geo.GeoPoint;
 import org.elasticsearch.common.unit.DistanceUnit;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.functionscore.FunctionScoreQueryBuilder;
+import org.elasticsearch.index.query.functionscore.ScoreFunctionBuilders;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -151,19 +153,13 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 		SearchRequest searchRequest = new SearchRequest("hotel"); // 索引名称
 		// 这里因为要进行一个过滤，所以这部分代码是新增进来的
 		// buidBasicQuery方法是新增的，用来构造查询条件，todo 导入课程代码
+		buildBasicQuery(requestParams, searchRequest);
 		searchRequest.source().size(0);
-		searchRequest.source().aggregation(AggregationBuilders.terms("brandAgg")
-				.field("brand.keyword")
-				.size(10));
-		searchRequest.source().aggregation(AggregationBuilders.terms("cityAgg")
-				.field("city.keyword")
-				.size(10));
-		searchRequest.source().aggregation(AggregationBuilders.terms("starAgg")
-				.field("starName.keyword")
-				.size(10));
+		// 2.3.聚合
+		buildAggregations(searchRequest);
 		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
 		// 有结果以后，需要对结果进行解析，才能进入我们的Java项目中
-		Map<String, List<String>> resultMap = new HashMap<>();
+		Map<String, List<String>> resultMap = new HashMap<>(3);
 		Aggregations aggregations = searchResponse.getAggregations(); // 获取聚合结果
 		List<String> brandList = getStringList(aggregations, "brandName");
 		resultMap.put("brand", brandList); // 品牌聚合结果存入map
@@ -172,6 +168,82 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 		List<String> starList = getStringList(aggregations, "starName");
 		resultMap.put("star", starList);
 		return resultMap;
+	}
+
+	@Override
+	public List<String> getSuggestion(String key) {
+		return List.of();
+	}
+
+	@Override
+	public void deleteById(Long hotelId) {
+
+	}
+
+	@Override
+	public void saveById(Long hotelId) {
+
+	}
+
+	private void buildBasicQuery(RequestParams params, SearchRequest request) {
+		// 1.准备Boolean查询
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+
+		// 1.1.关键字搜索，match查询，放到must中
+		String key = params.getKey();
+		if (StringUtils.isNotBlank(key)) {
+			// 不为空，根据关键字查询
+			boolQuery.must(QueryBuilders.matchQuery("all", key));
+		} else {
+			// 为空，查询所有
+			boolQuery.must(QueryBuilders.matchAllQuery());
+		}
+
+		// 1.2.品牌
+		String brand = params.getBrand();
+		if (StringUtils.isNotBlank(brand)) {
+			boolQuery.filter(QueryBuilders.termQuery("brand", brand));
+		}
+		// 1.3.城市
+		String city = params.getCity();
+		if (StringUtils.isNotBlank(city)) {
+			boolQuery.filter(QueryBuilders.termQuery("city", city));
+		}
+		// 1.4.星级
+		String starName = params.getStarName();
+		if (StringUtils.isNotBlank(starName)) {
+			boolQuery.filter(QueryBuilders.termQuery("starName", starName));
+		}
+		// 1.5.价格范围
+		Integer minPrice = params.getMinPrice();
+		Integer maxPrice = params.getMaxPrice();
+		if (minPrice != null && maxPrice != null) {
+			maxPrice = maxPrice == 0 ? Integer.MAX_VALUE : maxPrice;
+			boolQuery.filter(QueryBuilders.rangeQuery("price").gte(minPrice).lte(maxPrice));
+		}
+
+		// 2.算分函数查询
+		FunctionScoreQueryBuilder functionScoreQuery = QueryBuilders.functionScoreQuery(
+				boolQuery, // 原始查询，boolQuery
+				new FunctionScoreQueryBuilder.FilterFunctionBuilder[]{ // function数组
+						new FunctionScoreQueryBuilder.FilterFunctionBuilder(
+								QueryBuilders.termQuery("isAD", true), // 过滤条件
+								ScoreFunctionBuilders.weightFactorFunction(10) // 算分函数
+						)
+				}
+		);
+
+		// 3.设置查询条件
+		request.source().query(functionScoreQuery);
+	}
+
+	private void buildAggregations(SearchRequest request) {
+		request.source().aggregation(
+				AggregationBuilders.terms("brandAgg").field("brand").size(100));
+		request.source().aggregation(
+				AggregationBuilders.terms("cityAgg").field("city").size(100));
+		request.source().aggregation(
+				AggregationBuilders.terms("starAgg").field("starName").size(100));
 	}
 
 	/**
@@ -200,6 +272,42 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 	 * @param hits 搜索结果
 	 */
 	private PageResult handleResponse(SearchHits hits) {
+		// 没有按照课堂代码来写：
+		//         SearchHits searchHits = response.getHits();
+		//         // 4.1.总条数
+		//         long total = searchHits.getTotalHits().value;
+		//         // 4.2.获取文档数组
+		//         SearchHit[] hits = searchHits.getHits();
+		//         // 4.3.遍历
+		//         List<HotelDoc> hotels = new ArrayList<>(hits.length);
+		//         for (SearchHit hit : hits) {
+		//             // 4.4.获取source
+		//             String json = hit.getSourceAsString();
+		//             // 4.5.反序列化，非高亮的
+		//             HotelDoc hotelDoc = JSON.parseObject(json, HotelDoc.class);
+		//             // 4.6.处理高亮结果
+		//             // 1)获取高亮map
+		//             Map<String, HighlightField> map = hit.getHighlightFields();
+		//             if (map != null && !map.isEmpty()) {
+		//                 // 2）根据字段名，获取高亮结果
+		//                 HighlightField highlightField = map.get("name");
+		//                 if (highlightField != null) {
+		//                     // 3）获取高亮结果字符串数组中的第1个元素
+		//                     String hName = highlightField.getFragments()[0].toString();
+		//                     // 4）把高亮结果放到HotelDoc中
+		//                     hotelDoc.setName(hName);
+		//                 }
+		//             }
+		//             // 4.8.排序信息
+		//             Object[] sortValues = hit.getSortValues();
+		//             if (sortValues.length > 0) {
+		//                 hotelDoc.setDistance(sortValues[0]);
+		//             }
+		//
+		//             // 4.9.放入集合
+		//             hotels.add(hotelDoc);
+		//         }
+		//         return new PageResult(total, hotels);
 		// 为了符合前后端交互的逻辑，这里使用统一的返回格式包装一遍
 		PageResult pageResult = new PageResult();
 		List<HotelDoc> hotels = pageResult.getHotels();

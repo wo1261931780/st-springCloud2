@@ -408,7 +408,38 @@ public class HotelDocumentTest {
 	// 		log.info(option.getText().toString());// 获取建议选项的文本，这里是我们想要获取的对象
 	// 	}
 	// }
+	@Test
+	void testGetDocumentById() throws IOException {
+		// 1.准备Request      // GET /hotel/_doc/{id}
+		GetRequest request = new GetRequest("hotel", "61083");
+		// 2.发送请求
+		GetResponse response = restHighLevelClient.get(request, RequestOptions.DEFAULT);
+		// 3.解析响应结果
+		String json = response.getSourceAsString();
 
+		HotelDoc hotelDoc = JSON.parseObject(json, HotelDoc.class);
+		System.out.println("hotelDoc = " + hotelDoc);
+	}
+
+	@Test
+	void testDeleteDocumentById() throws IOException {
+		// 1.准备Request      // DELETE /hotel/_doc/{id}
+		DeleteRequest request = new DeleteRequest("hotel", "61083");
+		// 2.发送请求
+		restHighLevelClient.delete(request, RequestOptions.DEFAULT);
+	}
+
+	@Test
+	void testUpdateById() throws IOException {
+		// 1.准备Request
+		UpdateRequest request = new UpdateRequest("hotel", "61083");
+		// 2.准备参数
+		request.doc(
+				"price", "870"
+		);
+		// 3.发送请求
+		restHighLevelClient.update(request, RequestOptions.DEFAULT);
+	}
 
 
 }
