@@ -2,7 +2,7 @@ server:
   port: 8089
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/test_technical?useSSL=false
+    url: jdbc:mysql://localhost:3306/test_technical?useSSL=false&allowPublicKeyRetrieval=true
     username: root
     password: root
     driver-class-name: com.mysql.jdbc.Driver

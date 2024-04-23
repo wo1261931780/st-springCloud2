@@ -22,7 +22,7 @@ public interface IHotelService extends IService<Hotel> {
 
 	Map<String, List<String>> filters(RequestParams requestParams) throws IOException;
 
-	List<String> getSuggestion(String key);
+	List<String> getSuggestion(String key) throws IOException;
 
 	void deleteById(Long hotelId);
 

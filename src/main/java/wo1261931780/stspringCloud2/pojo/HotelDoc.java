@@ -5,6 +5,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -24,7 +25,9 @@ public class HotelDoc {
 	private Object distance;
 	private Boolean isAD;
 	private List<String> suggestion;
-	private String location;// 大部分的字段都是一样的，经纬度不一样
+	// 这里是因为索引中添加了部分字段，那么我们的实体类也需要进行对应的变化
+	private String location;
+	// 大部分的字段都是一样的，经纬度不一样
 	// 这里后面有很多修改，包括对构造方法的修改，以及对location字段的格式的修改。
 
 	public HotelDoc(Hotel hotel) {
@@ -40,6 +43,8 @@ public class HotelDoc {
 		this.location = hotel.getLatitude() + ", " + hotel.getLongitude();
 		this.pic = hotel.getPic();
 		// 自动补全字段的处理
+		// this.suggestion = Arrays.asList(this.brand,this.business);
+		// 在没有斜杠的情况下，我们不需要切分，所以这里用的就是Collections.addAll()方法
 		this.suggestion = new ArrayList<>();
 		// 添加品牌、城市
 		this.suggestion.add(this.brand);

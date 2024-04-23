@@ -4,8 +4,7 @@ package wo1261931780.stspringCloud2.Controller;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.*;
 import wo1261931780.stspringCloud2.pojo.PageResult;
 import wo1261931780.stspringCloud2.pojo.RequestParams;
 import wo1261931780.stspringCloud2.service.impl.HotelService;
@@ -25,6 +24,7 @@ import java.util.Map;
  */
 @Controller
 @Slf4j
+@RequestMapping("/hotel")
 public class HotelController {
 
 
@@ -35,31 +35,36 @@ public class HotelController {
 	public Map<String, List<String>> hotel(@RequestBody Map<String, Object> map) {
 		// log.info("hotel");
 		// return hotelService.filterHotel(map);
-
 		return null;
 	}
 
-	@PostMapping("/hotel/list")
+	@PostMapping("/list")
 	public PageResult searchHotel(@RequestBody RequestParams requestParams) throws IOException {
 		log.info("searchHotel");
 		return hotelService.searchHotel(requestParams);
 	}
 
-	@PostMapping("/hotel/booleanList")
+	@PostMapping("/booleanList")
 	public PageResult searchBooleanHotel(@RequestBody RequestParams requestParams) throws IOException {
 		log.info("searchHotel");
 		return hotelService.searchBooleanHotel(requestParams);
 	}
 
-	@PostMapping("/hotel/sortedList")
+	@PostMapping("/sortedList")
 	public PageResult searchSortedHotel(@RequestBody RequestParams requestParams) throws IOException {
 		log.info("searchSortedHotel");
 		return hotelService.searchSortedHotel(requestParams);
 	}
 
-	@PostMapping("/hotel/filters")
+	@PostMapping("/filters")
 	public Map<String, List<String>> searchFiltersHotel(@RequestBody RequestParams requestParams) throws IOException {
 		log.info("searchFiltersHotel");
 		return hotelService.filters(requestParams);// 之前我们写的不带参数，这里需要带上
+	}
+
+	@GetMapping("suggestion")
+	public List<String> getSuggestion(@RequestParam("key") String prefix) throws IOException {
+		log.info("getHotel");
+		return hotelService.getSuggestion(prefix);
 	}
 }

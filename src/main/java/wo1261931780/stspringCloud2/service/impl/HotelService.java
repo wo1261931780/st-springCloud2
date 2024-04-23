@@ -3,6 +3,7 @@ package wo1261931780.stspringCloud2.service.impl;
 
 import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import org.apache.commons.lang3.StringUtils;
 import org.elasticsearch.action.search.SearchRequest;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -22,6 +23,10 @@ import org.elasticsearch.search.builder.SearchSourceBuilder;
 import org.elasticsearch.search.sort.SortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import wo1261931780.stspringCloud2.mapper.HotelMapper;
@@ -171,8 +176,30 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 	}
 
 	@Override
-	public List<String> getSuggestion(String key) {
-		return List.of();
+	public List<String> getSuggestion(String key) throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source().suggest(
+				new SuggestBuilder()
+						.addSuggestion("suggestions",
+								SuggestBuilders.completionSuggestion("suggestion")
+										.prefix(key)
+										.skipDuplicates(true)
+										.size(10))
+		);
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		log.debug(searchResponse.toString());
+		Suggest suggest = searchResponse.getSuggest();
+		// Suggest.Suggestion<? extends Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option>>
+		// 泛型很长，实际上就是底下这个
+		CompletionSuggestion suggestions = suggest.getSuggestion("suggestions");
+		List<CompletionSuggestion.Entry.Option> options = suggestions.getOptions();
+		List<String> stringList = new ArrayList<>(options.size());
+		// 这里的空间大小是很有讲究的
+		for (CompletionSuggestion.Entry.Option option : options) {
+			log.debug(option.toString());
+			stringList.add(option.getText().toString());
+		}
+		return stringList;
 	}
 
 	@Override
@@ -191,7 +218,7 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 
 		// 1.1.关键字搜索，match查询，放到must中
 		String key = params.getKey();
-		if (StringUtils.isNotBlank(key)) {
+		if (key.isEmpty()) {
 			// 不为空，根据关键字查询
 			boolQuery.must(QueryBuilders.matchQuery("all", key));
 		} else {
@@ -201,7 +228,7 @@ public class HotelService extends ServiceImpl<HotelMapper, Hotel> implements IHo
 
 		// 1.2.品牌
 		String brand = params.getBrand();
-		if (StringUtils.isNotBlank(brand)) {
+		if (brand.isEmpty()) {
 			boolQuery.filter(QueryBuilders.termQuery("brand", brand));
 		}
 		// 1.3.城市

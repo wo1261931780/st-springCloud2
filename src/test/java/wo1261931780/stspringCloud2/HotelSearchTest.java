@@ -13,13 +13,22 @@ import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightBuilder;
 import org.elasticsearch.search.fetch.subphase.highlight.HighlightField;
 import org.elasticsearch.search.sort.SortOrder;
+import org.elasticsearch.search.suggest.Suggest;
+import org.elasticsearch.search.suggest.SuggestBuilder;
+import org.elasticsearch.search.suggest.SuggestBuilders;
+import org.elasticsearch.search.suggest.completion.CompletionSuggestion;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import wo1261931780.stspringCloud2.pojo.HotelDoc;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -35,7 +44,11 @@ import java.util.Map;
 public class HotelSearchTest {
 
 
+	private static final Logger log = LoggerFactory.getLogger(HotelSearchTest.class);
 	private RestHighLevelClient client;
+	@Qualifier("restHighLevelClient")
+	@Autowired
+	private RestHighLevelClient restHighLevelClient;
 
 	@Test
 	void testMatchAll() throws IOException {
@@ -88,7 +101,7 @@ public class HotelSearchTest {
 
 	@Test
 	void testSortAndPage() throws IOException {
-		int page = 2,size = 5;
+		int page = 2, size = 5;
 
 		// 1.准备request
 		SearchRequest request = new SearchRequest("hotel");
@@ -121,6 +134,40 @@ public class HotelSearchTest {
 		// 4.结果解析
 		handleResponse(response);
 	}
+
+	@Test
+	void testSuggest() throws IOException {
+		SearchRequest searchRequest = new SearchRequest("hotel");
+		searchRequest.source().suggest(
+				new SuggestBuilder()
+						.addSuggestion("suggestions",
+								SuggestBuilders.completionSuggestion("suggestion")
+										.prefix("s")
+										.skipDuplicates(true)
+										.size(10))
+		);
+		SearchResponse searchResponse = restHighLevelClient.search(searchRequest, RequestOptions.DEFAULT);
+		log.info(searchResponse.toString());
+		Suggest suggest = searchResponse.getSuggest();
+		// Suggest.Suggestion<? extends Suggest.Suggestion.Entry<? extends Suggest.Suggestion.Entry.Option>>
+		// 泛型很长，实际上就是底下这个
+		CompletionSuggestion suggestions = suggest.getSuggestion("suggestions");
+		List<CompletionSuggestion.Entry.Option> options = suggestions.getOptions();
+		for (CompletionSuggestion.Entry.Option option : options) {
+			log.info(option.toString());
+			// {"took":1,"timed_out":false,"_shards":{"total":1,"successful":1,"skipped":0,"failed":0},"hits":{"total":{"value":0,"relation":"eq"},"max_score":null,"hits":[]},"suggest":{"suggestions":[{"text":"s","offset":0,"length":1,"options":[{"text":"三里屯","_index":"hotel","_type":"_doc","_id":"396189","_score":1.0,"_source":{"address":"三丰北里3号","brand":"皇冠假日","business":"三里屯/工体/东直门地区","city":"北京","id":396189,"location":"39.92129, 116.43847","name":"北京朝阳悠唐皇冠假日酒店","pic":"https://m.tuniucd
+			// text:三里屯 score:1.0 context:[]
+			// text:上地产业园 score:1.0 context:[]
+			// text:上海火车站地区 score:1.0 context:[]
+			// text:四川北路商业区 score:1.0 context:[]
+			// text:松岗商业中心区 score:1.0 context:[]
+			// text:水贝珠宝城 score:1.0 context:[]
+			// text:沙头角 score:1.0 context:[]
+			// text:蛇口 score:1.0 context:[]
+			// text:首都机场 score:1.0 context:[]
+		}
+	}
+
 
 	private void handleResponse(SearchResponse response) {
 		SearchHits searchHits = response.getHits();
